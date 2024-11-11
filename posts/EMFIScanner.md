@@ -1,4 +1,5 @@
 # Getting started with EMFI and FaultyCat
+11/11/2024
 
 #hacking #emfi #faultycat #hardware #raspi 
 
