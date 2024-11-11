@@ -27,10 +27,14 @@ Since most simple to achieve the following tests will aim for a jump in a setup 
 
 ## Set up FaultyCat
 Setting up FaultyCat is pretty simple if the documentation on https://github.com/ElectronicCats/faultycat/wiki is followed. Having said that, the actual usage of the device is less in focus of the official documentation which has eventually led to creation of this post.
+
 ![Faulty Cat](../img/FaultyCat.jpg "Faulty Cat")
+
 The device supports a manual mode using the two push-buttons on the PCB which allow to first arm the device, i.e. charge the capacitor, and when charged activate the pulse. While this mode of operation does not seem to have any way to deliver reproducible results or allow configuration, the disarming functionality of the Arming button is sometimes helpful when the operation via UART fails.
 Mentioning UART, this appears to be the most convenient mode to operate FaultyCat. Connecting with a baud rate of 115200 leads to a menu that appears to be "inspired" by PicoEMP. The menu, even if has some bugs like displaying the correct pulse power in the configuration menu, allows usage of all relevant functions of the FaultyCat and enables experimenting with it.
+
 ![Faulty Cat Menu](../img/FaultyCat_Menu.jpg "Faulty Cat Menu")
+
 The usual workflow for experimenting is
 1. Configure pulse with [c]
 2. Arm device with [a]
@@ -66,11 +70,15 @@ Consequently disarming is mandatory before changing the configuration.
 
 #### Measuring EM pulses
 With a very simple setup using a cheap EMC sniffer probe and an oscilloscope the effects of the above described configuration parameters can be observed. 
+
 ![Pulse sniff](../img/Pulse_Probe.jpg "Pulse sniff")
+
 The results confirm what has been assumed based on firmware analysis and measurements of HVPULSE and HVPWM before:
 1. Pulse Duration has no effect: The discharge is completed after a maximum of 250ns, consequently setting a pulse duration in the microsecond range does not change the pulse itself
 2. Useful values for Pulse Power appear to be in the range of 0.001 to 0.010:
+
 ![Results of sniff](../img/Pulse_Probe_results.jpg "Results of sniff")
+
 Values larger than 0.012 do not show any effect; likely the secondary voltage at the capacitor reaches its maximum at this setting.
 
 ### Difference Fast-Trigger vs. External HVP
@@ -78,7 +86,9 @@ Apart from manual and UART controlled trigger, FaultyCat also supports two other
 
 ## Create a Raspberry Pico Target
 FaultyCat Wiki suggests to build a test setup with a Raspberry Pico and provides source code for the Arduino IDE. For reasons of consistent parameter a fixture to mount FaultyCat and Raspberry Pico is mandatory.
+
 ![Static setup](../img/Static_Pico.jpg "Static setup")
+
 The following code is an alternative to the target code proposed by FaultCat. While the original code used a `sleep` function to pause between `println` commands in the main loop, the code below uses a for-loop to create the delay and adds the delay counter (`dly`) to the main counter. In addition GPIO Pin 22 is used to monitor in which part of the main loop the execution currently operates which can be used for an external trigger later on.  
 Why a for loop and why adding the delay counter to the main counter? As monitoring GPIO22 reveals, the controller remains in the for-loop for the majority of the time. This makes timing of the EM pulse easier, because the pulse shall effect the program flow and not the serial communication. If a glitch was successful, i.e. an EM pulse caused a jump or caused skipping jump back to top of the for-loop,  `j` is not 0 at the time of printing to UART, as it should be in case the for-loop finishes as intended. A successful glitch becomes visible as soon as the Rasperry Pico sends a unexpected high numeric value instead of its usual main counter. This can easily be monitored externally.
 ```C
@@ -107,7 +117,9 @@ It turns out that successful glitches are much more likely to achieve in the upp
 
 ## Convert to Automated Setup
 As pointed out earlier, repeatable positioning is one of the main parameters to achieve a successful glitch. To achieve this a 3D printer or CNC positioning system is the most common solution, replacing printing nozzle or motor with the EMFI probe, in this case FaultyCat. 3D positioning systems can be conveniently controlled sending GCode commands via UART interface provided over USB connection.
+
 ![Automated setup](../img/Auto_Pico.jpg "Automated setup")
+
 In addition to positioning and EMFI probe the target must be observed during the procedure to determine which of the possible reactions the target shows during and after the pulse application. While reactions which lead to a continued operation of the target allow immediate continuation of the test procedure, the target may result in a state after pulse application, that requires a reset. While for many devices a simple relais will do the job, in case of the Raspberry Pico a PhyWhisperer USB was chosen to reset power supply over USB. 
 
 ![Automated concept](../img/Auto_Setup.jpg "Automated concept")
@@ -122,9 +134,12 @@ As discussed earlier there are three main reactions to be expected:
 3. Useful reaction, in this case: jump (shown below as red)
 
 FaultyCat was set to Pulse Duration 5 and Pulse Power 0.005. The following plot shows the system reaction based on the location where the pulse has been injected. 
+
 ![Scan result](../img/Result.jpg "Scan result")
+
 The initial position 0, 45 represents the lower left corner of the controller. The probe injects four pulses per position with a distance of 0.5mm between chip housing and probe tip and observes the target. If any of the four reactions is showing a jump, i.e. a single UART read of a very high number, the position is marked red. If one or more of the reactions result in a reset, but in no case a jump, the position is marked yellow. In any other case, i.e. no reaction, the position is marked green.
 The picture below shows the result as an overlay on the 7mmx7mm RP2040 controller of a Raspberry Pico.
+
 ![Scan result RP2040](../img/Result_Overlay.jpg "Scan result RP2040")
 
 ## Next steps
