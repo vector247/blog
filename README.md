@@ -1,3 +1,3 @@
 # Vector's blog
 
-[Getting started with EMFI and FaultyCat](./posts/EMFIScanner.md)
+[Getting started with EMFI and FaultyCat](https://github.com/vector247/blog/wiki)
